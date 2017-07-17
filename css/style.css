@@ -1,0 +1,98 @@
+@charset "utf-8";
+
+body {
+  font-family: "Hiragino Kaku Gothic Pro", sans-serif;
+  /*font-family: "Monaco";*/
+  /*background-color: #000000;*/
+  background-color: #212121;
+  /*background-color: #FFFFFF;*/
+  color: #404040;
+  margin-top: 0;
+  margin-bottom: 0;
+  font-size: 12pt;
+  /*font-size: 12pt;*/
+}
+
+body > header, body > section, body > footer {
+  width: 800px;
+  color: #FFFFFF;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+body > header {
+  /*background-color: #F08000;*/
+  background-color: #424242;
+  color: #FFFFFF;
+  /*color: #000000;*/
+  text-align: right;
+  margin-bottom: 32px;
+}
+
+body > header h1 {
+  font-size: 32pt;
+  font-weight: bold;
+  padding: 16px;
+  margin: 0;
+}
+
+body > section {
+  margin-bottom: 64px;
+}
+
+body > section h1 {
+  font-size: 18pt;
+  font-weight: bold;
+  /*color: #F08000;*/
+  color: #87bdd8;
+  /*border-bottom: 2px solid #FF9E1E;*/
+  border-bottom: 2px solid #FFFFFF;
+}
+
+body > section h2 {
+  font-size: 12pt;
+  font-weight: bold;
+  margin-top: 8px;
+  margin-bottom: 8px;
+}
+
+body > section dl, body > section ul {
+  margin-top: 8px;
+  margin-bottom: 32px;
+}
+
+body > section dl dt {
+  font-weight: bold;
+}
+
+body > section .profile-icon {
+  width: 256px;
+  height: 256px;
+  float: right;
+  margin-left: 16px;
+}
+
+body > footer {
+  /*background-color: #F08000;*/
+  background-color: #424242;
+  color: #FFFFFF;
+  text-align: right;
+}
+
+body > footer p {
+  font-size: 10pt;
+  padding: 16px;
+  margin: 0;
+}
+
+body > footer a {
+  color: #FFFFFF;
+}
+
+a:link {
+  color: lightblue;
+}
+
+a:visited {
+  color: #92a8d1;
+}
