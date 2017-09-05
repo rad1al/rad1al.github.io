@@ -18,52 +18,52 @@
     float screen_height = 1000;
     
     ArrayList<Brick> bricks = new ArrayList<Brick>(); 
-    
     boolean keyA = false;
     boolean keyD = false;
-    //Brick b = new Brick(10, 20);
+    boolean keyR = false;
+    
+    
     Ball ball = new Ball(80, -300);
-    Paddle paddle = new Paddle(-65, -screen_height/2+20); 
+    Paddle paddle_lower = new Paddle(-65, -screen_height/2+20, 10); 
+    Paddle paddle_upper = new Paddle(-65, screen_height/2-20, -10); 
     Stage stage = new Stage(screen_width, screen_height);
     
     
     void setup() {
       size(1200, 1000); // Set window dimensions.
-      //pixelDensity(2); // Turn on retina mode for retina screens. Doesn't work with Processing.js
+      pixelDensity(2); // Turn on retina mode for retina screens. Doesn't work with Processing.js
       create_bricks();
-      
     }
     
     void draw() {
       background(#000000);
       fill(#FFFFFF);
       ball.move();
-      paddle._draw();
+      paddle_lower._draw();
+      paddle_upper._draw();
       draw_bricks();
-      //move_paddle();
-      paddle.move();
-    
-      
+      paddle_lower.move();
+      paddle_upper.move();
+      stage.draw_score();
       ball._draw();
       ball.bounce_ball(stage, bricks);
+      stage.game_over(ball);
       }
     
     // allow user to hold down key for repetitive actions
     void keyPressed()
     {
-      if (key == 'a') { keyA = true; }   //paddle.move(-10);
+      if (key == 'a') { keyA = true; }
       if (key == 'd') { keyD = true; }  
-      
+      if (key == 'r') { keyR = true; }
     }
     
     void keyReleased(){
       if (key == 'a') { keyA = false; }
       if (key == 'd') { keyD = false; }
+      if (key == 'r') { keyR = false; }
     }
     
-    //void move_paddle(){
-    //  paddle.move();
-    //}
     
     class Ball {
       float x, y; 
@@ -73,8 +73,7 @@
       float xd = 4;
       float yd = 3.2;
       color c = #FFFFFF;
-      float gameoverx = -450; // coordinates for the "Game Over" text.
-      float gameovery = -50;
+    
     
       Ball(float x, float y) {
         this.x = x;
@@ -82,7 +81,9 @@
         this.r = h/2;
       } 
     
+    
       void move() {
+        // Move the ball by (xd,yd) on the cartesian plane.
         this.x += this.xd;
         this.y += this.yd;
       }
@@ -92,16 +93,12 @@
         ellipse(cx(x), cy(y), w, h);
       }
     
-      void detect_hline(float y) {
-        if (y < this.y) {
-          this.yd = this.yd * -1;
-        }
-      }
-    
       void bounce_ball(Stage s, ArrayList<Brick> bs) {
+        // Have the ball bounce off bricks and walls.
         h_wall_bounce(s);
         v_wall_bounce(s);
-        paddle_bounce(paddle);
+        paddle_bounce(paddle_lower);
+        paddle_bounce(paddle_upper);
         for (int i = 0; i < bs.size(); i++) {
           h_brick_wall_bounce(bs.get(i));
           v_brick_wall_bounce(bs.get(i));
@@ -109,16 +106,18 @@
       }
     
       void h_wall_bounce(Stage s) {
+        // Detect if ball has collided with any horizontal wall. If so, call game_over function.
         boolean hit_ceiling = ball_line(this.x, this.y, this.r, s.ulx, s.uly, s.urx, s.ury);
         boolean hit_floor = ball_line(this.x, this.y, this.r, s.llx, s.lly, s.lrx, s.lry);
-    
-        if (hit_ceiling || hit_floor) {
-          this.yd = this.yd * -1;
-          game_over();
+        if (stage.game_over_status == false) {
+          if (hit_ceiling || hit_floor) {
+            stage.game_over_status = true;
+          }
         }
       }
     
       void v_wall_bounce(Stage s) {
+        // Detect if ball has collided with any vertical wall.
         boolean hit_leftwall = ball_line(this.x, this.y, this.r, s.ulx, s.uly, s.llx, s.lly);
         boolean hit_rightwall = ball_line(this.x, this.y, this.r, s.urx, s.ury, s.lrx, s.lry);
     
@@ -134,7 +133,8 @@
     
           if (hit_top_wall || hit_bottom_wall) {
             this.yd = this.yd * -1;
-            b.visible = false;
+            //b.toggle_visible(false);
+            b.hit_brick(stage);
           }
         }
       }
@@ -146,32 +146,19 @@
     
           if (hit_left_wall || hit_right_wall) {
             this.xd = this.xd * -1;
-            b.visible = false;
+            //b.toggle_visible(false);
+            b.hit_brick(stage);
           }
         }
       }
     
       void paddle_bounce(Paddle p) {
-    
+        // Detect if ball has collided with a paddle.
         boolean hit_top_wall = ball_line(this.x, this.y, this.r, p.ulx, p.uly, p.urx, p.ury);
-    
-        if (hit_top_wall) {
+        boolean hit_bottom_wall = ball_line(this.x, this.y, this.r, p.llx, p.lly, p.lrx, p.lry);
+        if (hit_top_wall || hit_bottom_wall) {
           this.yd = this.yd * -1;
         }
-      }
-    
-      void game_over() {
-        textSize(160);
-        fill(#CECCCC);
-        text("GAME OVER", cx(gameoverx-2), cy(gameovery-2));
-        text("GAME OVER", cx(gameoverx+2), cy(gameovery+2));
-        text("GAME OVER", cx(gameoverx-2), cy(gameovery+2));
-        text("GAME OVER", cx(gameoverx+2), cy(gameovery-2));
-        fill(#FFFFFF);
-        text("GAME OVER", cx(gameoverx), cy(gameovery));
-        paddle.spd = 0;
-        xd = 0;
-        yd = 0;
       }
     }
     
@@ -180,7 +167,7 @@
       float w = 100; 
       float h = 50;
       color c;
-      float ulx, uly; //Corners of the brick. 
+      float ulx, uly; // corners of the brick. 
       float urx, ury;
       float llx, lly;
       float lrx, lry;
@@ -204,22 +191,31 @@
         if (visible) {
           fill(this.c);
           rect(cx(x), cy(y), w, h);
-          //ellipse(cx(lrx), cy(lry), 20, 20);
         }
       }
     
       void highlight_corners() {
-        // draw circles on the corners of the brick to help with debugging.
+        // Draw circles on the corners of the brick to help with debugging.
         fill(#FF6C6C);
         ellipse(cx(ulx), cy(uly), 20, 20);
         ellipse(cx(urx), cy(ury), 20, 20);
         ellipse(cx(llx), cy(lly), 20, 20);
         ellipse(cx(lrx), cy(lry), 20, 20);
       }
+      
+      void toggle_visible(boolean b) {
+        // Toggle visibility of brick.
+        this.visible = b;
+      }
+      
+      void hit_brick(Stage s){
+        toggle_visible(false);
+        s.score += 1;
+      }
     }
-    
+
     void create_bricks() {
-      // initialize bricks with different color for each layer.
+      // Initialize bricks with different color for each layer.
       for (int i = -6; i < 5; i++) { //creates 7
         bricks.add(new Brick(i*100+50, -50, #ffb3ba)); //Pastel red
         bricks.add(new Brick(i*100+50, 0, #ffdfba)); //Pastel orange
@@ -236,6 +232,13 @@
       }
     }
     
+    void reset_bricks() {
+      // Restore visibility for all bricks.
+      for (int i = 0; i < bricks.size(); i++) {
+        bricks.get(i).toggle_visible(true);
+      }
+    }
+        
     class Paddle {
       float w = 130;
       float h = 10;
@@ -246,7 +249,7 @@
       float lrx, lry;
       float spd = 10;
     
-      Paddle(float x, float y) {
+      Paddle(float x, float y, float spd) {
         this.x = x;
         this.y = y;
         this.ulx = x;
@@ -257,6 +260,7 @@
         this.lly = y-h;
         this.lrx = x+w;
         this.lry = y-h;
+        this.spd = spd;
       }
     
       void _draw()
@@ -284,11 +288,16 @@
     }
     
     class Stage {
+      int score = 0;
       float ulx, uly;
       float urx, ury;
       float llx, lly;
       float lrx, lry;
-      
+      float gameoverx = -450; // coordinates for the "Game Over" text.
+      float gameovery = -50;
+      boolean game_over_status = false;
+    
+    
       Stage(float sw, float sh) {
         this.ulx = -sw/2;
         this.uly = sh/2;
@@ -298,6 +307,52 @@
         this.lly = -sh/2;
         this.lrx = sw/2;
         this.lry = -sh/2;
+      }
+    
+      void game_over(Ball b) {
+        // Draw game over message, restrict movement of paddles, and wait for restart command.
+        if (this.game_over_status) {
+          draw_game_over_message();
+          paddle_upper.spd = 0;
+          paddle_lower.spd = 0;
+          b.xd = 0;
+          b.yd = 0;
+          if (keyR) {
+            this.restart();
+          }
+        }
+      }
+    
+      void restart() {
+        // Restart the game.
+        this.game_over_status = false;
+        this.score = 0;
+        reset_bricks();
+        paddle_lower.spd = 10;
+        paddle_upper.spd = -10;
+        ball.xd = 4;
+        ball.yd = 3.2;
+        ball.x = 80;
+        ball.y = -300;
+      }
+    
+      void draw_game_over_message() {
+        // Draw "Game Over" message. Should be run after draw_bricks() in draw() loop so message appears on top.
+        textSize(160);
+        fill(#CECCCC);
+        text("GAME OVER", cx(gameoverx-2), cy(gameovery-2));
+        text("GAME OVER", cx(gameoverx+2), cy(gameovery+2));
+        text("GAME OVER", cx(gameoverx-2), cy(gameovery+2));
+        text("GAME OVER", cx(gameoverx+2), cy(gameovery-2));
+        fill(#FFFFFF);
+        text("GAME OVER", cx(gameoverx), cy(gameovery));
+      }
+    
+      void draw_score() {
+        // Draw the current score with some transparency.
+        textSize(50);
+        fill(255, 255, 255, 150);
+        text("Score: " + this.score, cx(-screen_width/2 + 50), cy(screen_height/2 - 100));
       }
     }
     
